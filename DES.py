@@ -1,9 +1,9 @@
 from bitstring import Bits, BitArray, BitStream, pack
 import random
 
-def shift_key(input_bit_array, round_number, PC2):
 
-    return_key = BitArray(length=48)
+def shift_key(input_bit_array, round_number):
+
     left_key = input_bit_array[:28]
     right_key = input_bit_array[28:]
 
@@ -12,15 +12,29 @@ def shift_key(input_bit_array, round_number, PC2):
     if round_number in {1, 2, 9, 16}:
         shift_number = 1
 
+    tmp_left_key = left_key[:shift_number]
+    tmp_right_key = right_key[:shift_number]
+
     left_key <<= shift_number
     right_key <<= shift_number
 
+    left_key = left_key[:-shift_number] + tmp_left_key
+    right_key = right_key[:-shift_number] + tmp_right_key
+
     final_key = left_key + right_key
 
-    for index in range(48):
-        return_key[index] = final_key[PC2[index]-1]
+    return final_key
 
-    return return_key
+
+
+def permutate_bitarray(input_bit_array, table, length):
+
+    permuted_array = BitArray(length=length)
+
+    for index in range(length):
+        permuted_array[index] = input_bit_array[table[index]-1]
+
+    return permuted_array
 
 # =================================== MAIN CODE ==============================================
 
@@ -59,15 +73,15 @@ if __name__ == '__main__':
 
     print(PC1)  # todo: remove
 
-    chunks2 = BitArray(length=64)
+    tmp = []
+    for index in range(len(chunks)):
+        tmp.append(permutate_bitarray(chunks[index], PC1, 64))
 
-    # Permutates the plaintext bits by moving them around according to the order of the addresses in the PC1 array
-    for chunk in chunks:
-        for i in chunk:
-            chunks2[i] = key[PC1[i] - 1]
+    chunks = tmp
 
-    print(chunks2.bin)  # todo: remove these
-    print(chunks2.bin)
+    for i in range(len(chunks)):  #todo: remove
+        print(chunks[i].bin)
+
 
     # Removing every 8th bit =====================================================================
     # Removes every 8th bit from the 64-bit key
@@ -84,8 +98,25 @@ if __name__ == '__main__':
     print(key)  # todo: remove these
     print(key2)
 
-    print(shift_key(key2,1, PC2))  # todo: remove these
+    # Key permutation and slicing from 56 bits to 48 bits =========================================
+    keys = []
+    tmp = key2
 
+    for i in range(0,16):  # Gets all 56 bit keys for all 16 rounds by shifting
+        tmp = shift_key(tmp,i+1)
+        keys.append(tmp)
 
+    print("Printing new keys")  # todo: remove these
+    for i in range(0,16):
+        print(keys[i].bin)
 
+    tmp = []
+    for index in range(len(keys)): # Permutes shifted 56 bit keys into 48 bits
+        tmp.append(permutate_bitarray(keys[index], PC2, 48))
+
+    keys = tmp
+
+    print("Printing permuted keys")  # todo: remove these
+    for i in range(0,16):
+        print(keys[i].bin)
 
