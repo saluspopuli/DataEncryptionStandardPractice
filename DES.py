@@ -36,6 +36,33 @@ def permutate_bitarray(input_bit_array, table, length):
 
     return permuted_array
 
+def DES_round(message, key, IP):
+    final_message = ""
+    selection_table = [31, 1,  2,  3,  4,  5,
+                       4,  5,  6,  7,  8,  9,
+                       8,  9,  10, 11, 12, 13,
+                       12, 13, 14, 15, 16, 17,
+                       16, 17, 18, 19, 20, 21,
+                       20, 21, 22, 23, 24, 25,
+                       24, 25, 26, 27, 28, 29,
+                       28, 29, 30, 31, 32, 1]
+
+    permuted_text = permutate_bitarray(message, IP, 64)
+    print(permuted_text.bin)    # todo: remove
+
+    left_text = permuted_text[:32]
+    right_text = permuted_text[32:]
+
+    print(right_text.bin)       # todo: remove
+    right_text = permutate_bitarray(right_text, selection_table, 48)
+    print(right_text.bin)       # todo: remove
+    print(key.bin)              #todo: remove
+    right_text = right_text ^ key
+    print(right_text.bin)       # todo: remove
+    return final_message
+
+
+
 # =================================== MAIN CODE ==============================================
 
 
@@ -50,7 +77,11 @@ if __name__ == '__main__':
     PC1 = random.sample(range(1,65),64)  # generates PC1 table
     PC2 = random.sample(range(1,57),56)[0:48]  # generates PC2 table
 
-    # Slicing of bitstream into list =============================================================
+    IP = random.sample(range(1,65),64)
+
+    PC_KEY = random.sample(range(1,65),64)
+
+    # Slicing of message bitstream into list =============================================================
 
     bitstream = BitArray(bytes=input_string.encode())  # converts string into ASCII binary
     chunks = []
@@ -69,18 +100,10 @@ if __name__ == '__main__':
         print(chunks[i].tobytes().decode("utf-8"))
 
     # Initial Permutation =======================================================================
-    # Permutates the plaintext/bitstream message chunks
+    # Permutates the key
 
-    print(PC1)  # todo: remove
-
-    tmp = []
-    for index in range(len(chunks)):
-        tmp.append(permutate_bitarray(chunks[index], PC1, 64))
-
-    chunks = tmp
-
-    for i in range(len(chunks)):  #todo: remove
-        print(chunks[i].bin)
+    key = permutate_bitarray(key, PC_KEY, 64)
+    print(key)  #todo: remove
 
 
     # Removing every 8th bit =====================================================================
@@ -111,7 +134,7 @@ if __name__ == '__main__':
         print(keys[i].bin)
 
     tmp = []
-    for index in range(len(keys)): # Permutes shifted 56 bit keys into 48 bits
+    for index in range(len(keys)):  # Permutes shifted 56 bit keys into 48 bits
         tmp.append(permutate_bitarray(keys[index], PC2, 48))
 
     keys = tmp
@@ -120,3 +143,4 @@ if __name__ == '__main__':
     for i in range(0,16):
         print(keys[i].bin)
 
+    DES_round(chunks[0], keys[0], IP)
